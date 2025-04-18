@@ -26,7 +26,8 @@
             padding: 20px;
             box-sizing: border-box;
             min-height: 100%;
-            /* Ensure body takes at least full height */
+            /* Add padding-bottom to prevent footer overlap if content gets very long */
+            padding-bottom: 40px;
         }
 
         /* Main Container */
@@ -298,6 +299,22 @@
             /* Make it visible */
             opacity: 1;
         }
+
+        /* Footer Styling */
+        .footer-credit {
+            position: fixed;
+            /* Keep it fixed at the bottom */
+            bottom: 10px;
+            /* Space from bottom */
+            right: 15px;
+            /* Space from right */
+            font-size: 10px;
+            /* Small font size */
+            color: #777;
+            /* Dim color */
+            z-index: 500;
+            /* Below tooltip but above most content */
+        }
     </style>
 </head>
 
@@ -324,6 +341,10 @@
     </div>
 
     <div id="custom-tooltip"></div>
+
+    <div class="footer-credit">
+        built by @mickaelchau and his dear friend Gemini
+    </div>
 
     <script>
         const form = document.getElementById('check-form');
