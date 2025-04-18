@@ -30,4 +30,4 @@ def evaluate_uri(uri: str) -> dict:
         resp.raise_for_status()
         return resp.json()
     except Exception as e:
-        return {"error": f"An error occurred: {e}"}
+        return {"error": f"An error occurred"}
