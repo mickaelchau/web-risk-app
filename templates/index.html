@@ -1,0 +1,583 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Web Risk Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* General Styles */
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #12121A;
+            color: #E0E0E0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            min-height: 100%;
+            /* Ensure body takes at least full height */
+        }
+
+        /* Main Container */
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Title Styling */
+        h1 {
+            font-family: "Google Sans Mono", monospace;
+            font-size: 36px;
+            font-weight: 600;
+            color: #E0E0E0;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        /* Form & Input Container Styling */
+        .search-container {
+            display: flex;
+            align-items: center;
+            background-color: #2A2A38;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 770px;
+            box-sizing: border-box;
+        }
+
+        #check-form {
+            display: flex;
+            flex-grow: 1;
+            align-items: center;
+        }
+
+        /* Input & Select Styling */
+        #check-form input[name="url"],
+        #check-form select[name="action"] {
+            background-color: #2A2A38;
+            color: #E0E0E0;
+            border: none;
+            padding: 10px 12px;
+            font-size: 16px;
+            outline: none;
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+
+        #check-form input[name="url"] {
+            flex-grow: 1;
+        }
+
+        #check-form input[name="url"]::placeholder {
+            color: #888;
+        }
+
+        #check-form select[name="action"] {
+            flex-grow: 0;
+            min-width: 120px;
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23AAAAAA%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.4-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 10px 10px;
+            padding-right: 30px;
+        }
+
+        #check-form select[name="action"] option {
+            background-color: #333343;
+            color: #E0E0E0;
+        }
+
+        /* Button Styling */
+        #check-form button[type="submit"] {
+            background-color: #4285F4;
+            color: #FFFFFF;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+            white-space: nowrap;
+        }
+
+        #check-form button[type="submit"]:hover {
+            background-color: #3578E5;
+        }
+
+        /* Result Area Styling */
+        #result {
+            background-color: #1E1E28;
+            border: 1px solid #2A2A38;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 0;
+            width: 100%;
+            max-width: 770px;
+            min-height: 50px;
+            max-height: 40vh;
+            overflow-y: auto;
+            /* Enable vertical scrolling */
+            text-align: left;
+            word-wrap: break-word;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 13px;
+            color: #C0C0C0;
+            box-sizing: border-box;
+        }
+
+        /* Styling for individual history entries */
+        .history-entry {
+            padding: 8px 5px;
+            margin-bottom: 5px;
+            line-height: 1.4;
+        }
+
+        /* Add border-bottom to all but the very last item visually (which is first in DOM) */
+        #result .history-entry:not(:first-child) {
+            border-bottom: 1px dashed #333;
+        }
+
+        /* Remove border from the first item in the DOM (visually last) */
+        #result .history-entry:first-child {
+            border-bottom: none;
+        }
+
+
+        /* Style for error messages within history entries */
+        .history-entry.error {
+            color: #FF8A80;
+            /* Light red for general errors */
+        }
+
+        /* Style for Lookup API threat list */
+        .history-entry.threat-found .lookup-threats {
+            color: #FFAB40;
+            /* Amber/Orange for lookup threat list */
+        }
+
+
+        .history-entry .timestamp {
+            color: #888;
+            font-size: 11px;
+            margin-right: 8px;
+        }
+
+        .history-entry .action-label {
+            font-weight: bold;
+            color: #aaa;
+            margin-right: 5px;
+        }
+
+        .history-entry .url-label {
+            color: #bbb;
+            margin-right: 5px;
+            word-break: break-all;
+        }
+
+        .history-entry .result-data {
+            white-space: pre-wrap;
+            /* Allow wrapping within the result data */
+            display: block;
+            /* Ensure result data takes its own block */
+            margin-top: 4px;
+            /* Add space between header and result */
+        }
+
+        /* Container for threat boxes to allow spacing */
+        .threat-boxes-container {
+            display: flex;
+            flex-wrap: wrap;
+            /* Allow boxes to wrap */
+            gap: 5px;
+            /* Add space between boxes */
+        }
+
+        /* Base styling for all threat/status boxes */
+        .threat-box,
+        .benign-box {
+            color: #000000;
+            /* Default to black text for contrast on colored backgrounds */
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            /* Slightly smaller font for boxes */
+            font-weight: 600;
+            /* Bolder text */
+            display: inline-block;
+            text-transform: uppercase;
+            /* Make threat types uppercase */
+            letter-spacing: 0.5px;
+            user-select: none;
+            -webkit-user-select: none;
+            /* Safari */
+            -moz-user-select: none;
+            /* Firefox */
+            -ms-user-select: none;
+            /* IE/Edge */
+            position: relative;
+            /* Needed for potential absolute positioning of custom tooltips if implemented differently */
+        }
+
+        /* Styling for the green "Benign" or "Safe URL" box */
+        .benign-box {
+            background-color: #66BB6A;
+            /* Material Green 400 */
+            color: #FFFFFF;
+            /* White text on green */
+            cursor: default;
+            /* No tooltip needed for safe */
+        }
+
+        /* Yellow box for LOW confidence */
+        .threat-low {
+            background-color: #FFEE58;
+            /* Material Yellow 400 */
+        }
+
+        /* Orange box for MEDIUM confidence */
+        .threat-medium {
+            background-color: #FFA726;
+            /* Material Orange 400 */
+        }
+
+        /* Red box for HIGH+ confidence */
+        .threat-high {
+            background-color: #EF5350;
+            /* Material Red 400 */
+            color: #FFFFFF;
+            /* White text on red */
+        }
+
+        /* Custom Tooltip Styling */
+        #custom-tooltip {
+            position: absolute;
+            /* Position relative to the viewport */
+            display: none;
+            /* Hidden by default */
+            background-color: #333;
+            /* Dark background */
+            color: #fff;
+            /* White text */
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            /* Prevent wrapping */
+            z-index: 1000;
+            /* Ensure it's on top */
+            pointer-events: none;
+            /* Prevent tooltip from interfering with mouse events */
+            opacity: 0;
+            /* Start invisible for transition */
+            transition: opacity 0.1s ease-in-out;
+            /* Quick fade-in */
+        }
+
+        #custom-tooltip.visible {
+            display: block;
+            /* Make it visible */
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <h1>Web Risk Demo</h1>
+
+        <div class="search-container">
+            <form id="check-form">
+                <input id="urlInput" name="url" placeholder="Enter hostname, domain, ip, URL..." required>
+                <select id="action-select" name="action">
+                    <option value="lookup">Lookup API</option>
+                    <option value="evaluate">Evaluate API</option>
+                </select>
+                <button type="submit">CHECK</button>
+            </form>
+        </div>
+
+        <div id="result" data-initialized="false">
+            <div class="history-entry" style="color: #888; border: none;">Submit a URL to see the history.</div>
+        </div>
+
+    </div>
+
+    <div id="custom-tooltip"></div>
+
+    <script>
+        const form = document.getElementById('check-form');
+        const resultDiv = document.getElementById('result');
+        const urlInput = document.getElementById('urlInput');
+        // Get reference to the custom tooltip element
+        const tooltip = document.getElementById('custom-tooltip');
+
+        // Helper function to sanitize text for HTML insertion
+        function sanitizeHTML(text) {
+            // Ensure text is treated as a string
+            const stringText = String(text);
+            const temp = document.createElement('div');
+            temp.textContent = stringText;
+            return temp.innerHTML;
+        }
+
+        // --- Function to process scores and generate threat boxes ---
+        function processScores(scores) {
+            let boxesHTML = '';
+            let threatsFound = false;
+            scores.forEach(score => {
+                let boxClass = 'threat-box';
+                let confidence = score.confidenceLevel.toUpperCase();
+                let confidenceLevelText = score.confidenceLevel;
+
+                switch (confidence) {
+                    case 'LOW':
+                        boxClass += ' threat-low';
+                        threatsFound = true;
+                        break;
+                    case 'MEDIUM':
+                        boxClass += ' threat-medium';
+                        threatsFound = true;
+                        break;
+                    case 'HIGH':
+                    case 'HIGHER':
+                    case 'VERY_HIGH':
+                    case 'EXTREMELY_HIGH':
+                        boxClass += ' threat-high';
+                        threatsFound = true;
+                        break;
+                    case 'SAFE':
+                    default:
+                        boxClass = null;
+                        break;
+                }
+
+                if (boxClass) {
+                    const safeThreatType = sanitizeHTML(score.threatType);
+                    const safeConfidenceLevel = sanitizeHTML(confidenceLevelText);
+                    boxesHTML += `<span class="${boxClass}" data-confidence="${safeConfidenceLevel}">${safeThreatType}</span>`;
+                }
+            });
+            return {
+                boxesHTML,
+                threatsFound
+            };
+        }
+
+
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+
+            // --- Create a temporary "Checking..." entry ---
+            const checkingEntry = document.createElement('div');
+            checkingEntry.className = 'history-entry';
+            checkingEntry.style.color = '#888'; // Dim color
+            checkingEntry.textContent = 'Checking...';
+
+            // Clear placeholder if present and add checking message
+            if (resultDiv.dataset.initialized === 'false') {
+                resultDiv.innerHTML = ''; // Clear initial placeholder
+                resultDiv.dataset.initialized = 'true';
+            }
+            // Prepend the checking message so it appears at the top
+            resultDiv.prepend(checkingEntry);
+            // --- End Checking Entry ---
+
+
+            const formData = new FormData(form);
+            const action = formData.get('action');
+            const urlToCheck = formData.get('url'); // Get URL for logging
+            const endpoint = action === 'evaluate' ? '/evaluate' : '/lookup';
+
+            const bodyParams = new URLSearchParams();
+            bodyParams.append('url', urlToCheck);
+
+            try {
+                const resp = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: bodyParams
+                });
+
+                const json = await resp.json();
+
+                // Remove the "Checking..." message
+                checkingEntry.remove();
+
+                // --- Create and prepend the actual result entry ---
+                const entryDiv = document.createElement('div');
+                let entryClasses = ['history-entry'];
+                let resultHTML = ''; // Holds the formatted result HTML
+                let threatsFoundInEntry = false; // Flag specific to this entry
+
+                const timestamp = new Date().toLocaleTimeString();
+
+                if (resp.ok) {
+                    // --- Handle successful responses ---
+
+                    // Logic for EVALUATE API response (always expects scores)
+                    if (action === 'evaluate') {
+                        if (json.scores && Array.isArray(json.scores)) {
+                            const {
+                                boxesHTML,
+                                threatsFound
+                            } = processScores(json.scores);
+                            threatsFoundInEntry = threatsFound;
+                            if (threatsFoundInEntry) {
+                                resultHTML = `<div class="threat-boxes-container">${boxesHTML}</div>`;
+                            } else {
+                                resultHTML = '<span class="benign-box">SAFE URL</span>'; // Changed from Benign
+                            }
+                        } else {
+                            console.warn("Evaluate API response missing scores array:", json);
+                            resultHTML = '<span class="benign-box">SAFE URL</span>'; // Assume safe if no scores
+                        }
+                    }
+                    // Logic for LOOKUP API response (check for scores OR threat.threat_types)
+                    else if (action === 'lookup') {
+                        // Check if response has 'scores' format (as user reported)
+                        if (json.scores && Array.isArray(json.scores)) {
+                            const {
+                                boxesHTML,
+                                threatsFound
+                            } = processScores(json.scores);
+                            threatsFoundInEntry = threatsFound;
+                            if (threatsFoundInEntry) {
+                                resultHTML = `<div class="threat-boxes-container">${boxesHTML}</div>`;
+                            } else {
+                                resultHTML = '<span class="benign-box">SAFE URL</span>';
+                            }
+                        }
+                        // Check for the standard 'threat.threat_types' format
+                        else if (json.threat && json.threat.threat_types && Array.isArray(json.threat.threat_types) && json.threat.threat_types.length > 0) {
+                            const safeThreatTypes = json.threat.threat_types.map(t => sanitizeHTML(t));
+                            // Display threats list with specific class for styling
+                            resultHTML = `<span class="lookup-threats">${safeThreatTypes.join('<br>')}</span>`;
+                            threatsFoundInEntry = true; // Mark threats as found
+                        }
+                        // Otherwise, assume safe
+                        else {
+                            resultHTML = '<span class="benign-box">SAFE URL</span>';
+                        }
+                    }
+                    // Fallback for unexpected successful response format if action is unknown
+                    else {
+                        console.warn("Unexpected action or successful response format:", json);
+                        const pre = document.createElement('pre');
+                        pre.textContent = JSON.stringify(json, null, 2);
+                        resultHTML = pre.outerHTML;
+                    }
+
+                    // Add threat-found or all-safe class based on the outcome
+                    if (threatsFoundInEntry) {
+                        entryClasses.push('threat-found');
+                    } else {
+                        entryClasses.push('all-safe');
+                    }
+
+                } else {
+                    // --- Handle error responses ---
+                    resultHTML = `Error: ${sanitizeHTML(json.error || resp.statusText)}`;
+                    entryClasses.push('error');
+                }
+
+                // Set the combined classes for the entry div
+                entryDiv.className = entryClasses.join(' ');
+
+                // Build the final inner HTML for the entry
+                const safeUrlToCheck = sanitizeHTML(urlToCheck);
+                entryDiv.innerHTML = `
+                    <div>
+                        <span class="timestamp">[${timestamp}]</span>
+                        <span class="action-label">${action.toUpperCase()}:</span>
+                        <span class="url-label">${safeUrlToCheck}</span>
+                    </div>
+                    <div class="result-data">${resultHTML}</div>
+                `;
+                // Prepend the new entry so it appears at the top
+                resultDiv.prepend(entryDiv);
+
+            } catch (err) {
+                // Remove the "Checking..." message in case of network error
+                checkingEntry.remove();
+
+                // --- Create and prepend the network error entry ---
+                const errorEntryDiv = document.createElement('div');
+                let errorClasses = ['history-entry', 'error'];
+                const timestamp = new Date().toLocaleTimeString();
+                const safeUrlToCheck = sanitizeHTML(urlToCheck);
+                const safeErrorMsg = sanitizeHTML(String(err));
+                let errorResultHTML = `Network error: ${safeErrorMsg}`;
+
+                errorEntryDiv.className = errorClasses.join(' ');
+                errorEntryDiv.innerHTML = `
+                     <div>
+                         <span class="timestamp">[${timestamp}]</span>
+                         <span class="action-label">${action.toUpperCase()}:</span>
+                         <span class="url-label">${safeUrlToCheck}</span>
+                     </div>
+                     <div class="result-data">${errorResultHTML}</div>
+                 `;
+                resultDiv.prepend(errorEntryDiv);
+            } finally {
+                // --- Clear the input field ---
+                urlInput.value = '';
+            }
+        });
+
+        // --- Custom Tooltip Event Listeners (using event delegation) ---
+        resultDiv.addEventListener('mouseover', (event) => {
+            // Check if the hovered element is a threat box with confidence data
+            const targetBox = event.target.closest('.threat-box[data-confidence]');
+            if (targetBox) {
+                const confidence = targetBox.dataset.confidence;
+                tooltip.textContent = confidence; // Set tooltip text
+                tooltip.classList.add('visible'); // Make tooltip visible
+            }
+        });
+
+        resultDiv.addEventListener('mousemove', (event) => {
+            // Check if the tooltip should be visible
+            if (tooltip.classList.contains('visible')) {
+                // Position the tooltip slightly offset from the mouse cursor
+                tooltip.style.left = `${event.pageX + 10}px`;
+                tooltip.style.top = `${event.pageY + 10}px`;
+            }
+        });
+
+        resultDiv.addEventListener('mouseout', (event) => {
+            // Check if the mouse is leaving a threat box
+            const targetBox = event.target.closest('.threat-box[data-confidence]');
+            // Check if the relatedTarget (where the mouse moved to) is outside the box
+            const relatedTargetIsOutside = !targetBox || !targetBox.contains(event.relatedTarget);
+
+            if (targetBox && relatedTargetIsOutside) {
+                tooltip.classList.remove('visible'); // Hide tooltip
+            }
+        });
+    </script>
+</body>
+
+</html>
