@@ -4,3 +4,4 @@ flask
 google-cloud-webrisk
 requests
 gunicorn
+google-cloud-logging
