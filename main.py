@@ -21,9 +21,9 @@ def lookup():
         return jsonify(error="No URL provided"), 400
 
     result = lookup_uri(url)
-    print("la" + str(result))
     if "error" in result:
         return jsonify(result), 500
+    print("Lookup request for url: " + url + " result: " + str(result))
     return jsonify(result)
 
 @app.route('/evaluate', methods=['POST'])
@@ -35,6 +35,7 @@ def evaluate():
     result = evaluate_uri(url)
     if "error" in result:
         return jsonify(result), 500
+    print("Evaluate request for url: " + url + " result: " + str(result))
     return jsonify(result)
 
 if __name__ == '__main__':
