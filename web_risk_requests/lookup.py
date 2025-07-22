@@ -1,42 +1,47 @@
+# lookup.py
+import os
+import requests
 
-import google.cloud.webrisk_v1 as webrisk_v1
+API_KEY = os.getenv("WEB_RISK_KEY")
+THREAT_TYPES = [
+    "MALWARE",
+    "SOCIAL_ENGINEERING",
+    "UNWANTED_SOFTWARE",
+    "SOCIAL_ENGINEERING_EXTENDED_COVERAGE",
+]
 
 def lookup_uri(uri: str) -> dict:
-#Example: "http://testsafebrowsing.appspot.com/s/malware.html"
+    if not API_KEY:
+        raise RuntimeError("Set WEB_RISK_KEY in your environment.")
+    # Build params: repeat threatTypes for each value
+    params = [
+        ("key", API_KEY),
+        ("uri", uri)
+    ] + [("threatTypes", t) for t in THREAT_TYPES]
+
+    url = "https://webrisk.googleapis.com/v1/uris:search"
+
+    response = requests.get(url, params=params, timeout=30)
+    #print(response.text)
+    data = response.json()
+    print("data:", data)
     try:
-        webrisk_client = webrisk_v1.WebRiskServiceClient()
-
-        request = webrisk_v1.SearchUrisRequest()
-        request.threat_types = [webrisk_v1.ThreatType.MALWARE,
-                                 webrisk_v1.ThreatType.SOCIAL_ENGINEERING,
-                                 webrisk_v1.ThreatType.UNWANTED_SOFTWARE,
-                                 webrisk_v1.ThreatType.SOCIAL_ENGINEERING_EXTENDED_COVERAGE]
-        request.uri = uri
-
-        response = webrisk_client.search_uris(request)
-        
-        result = {}
-        if response.threat:
-            result['scores'] = [
-                {"threatType": threat_type.name, "confidenceLevel": "HIGH"} for threat_type in response.threat.threat_types
+        response.raise_for_status()
+    except requests.HTTPError:
+        # Log body for easier debugging
+        raise RuntimeError(f"Web Risk error {response.status_code}: {response.text}") from None
+    result = {}
+    threat_info = data.get("threat")
+    if threat_info and "threatTypes" in threat_info:
+        result["scores"] = [
+            {"threatType": t, "confidenceLevel": "HIGH"}
+            for t in threat_info["threatTypes"]
+        ]
+    else:
+        result = {
+            "scores": [
+                {"confidenceLevel": "SAFE", "threatType": t}
+                for t in THREAT_TYPES
             ]
-        else:
-            result = { 
-                "scores": [
-                    {
-                        "confidenceLevel": "SAFE",
-                        "threatType": "SOCIAL_ENGINEERING"
-                    },
-                    {
-                        "confidenceLevel": "SAFE",
-                        "threatType": "MALWARE"
-                    },
-                    {
-                        "confidenceLevel": "SAFE",
-                        "threatType": "UNWANTED_SOFTWARE"
-                    }
-                ]
-            }
-        return result
-    except Exception as e:
-        return {"error": f"An error occurred: {e}"}
+        }
+    return result
